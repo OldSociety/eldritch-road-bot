@@ -14,6 +14,7 @@ const path = require('node:path')
 const sequelize = require('./config/sequelize.js')
 
 const { Client, Collection, GatewayIntentBits } = require('discord.js')
+const { User } = require('./Models/model')
 
 // Create a new client instance
 const client = new Client({

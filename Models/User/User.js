@@ -42,13 +42,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   })
 
-  // Association definition for Users
-  User.associate = (models) => {
-    User.hasMany(models.Investigator, {
-      foreignKey: 'userId',
-      as: 'investigators',
-    })
-  }
-
   return User
 }

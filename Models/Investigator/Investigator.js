@@ -61,13 +61,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   })
 
-  // Association definition for Investigators
-  Investigator.associate = (models) => {
-    Investigator.belongsTo(models.User, {
-      foreignKey: 'userId',
-      as: 'user',
-    })
-  }
-
   return Investigator
 }
