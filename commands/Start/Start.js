@@ -1,9 +1,9 @@
-// ./commands/Register.js
+// Start.js
 const { SlashCommandBuilder } = require('discord.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('register')
+    .setName('start')
     .setDescription('Participate in the spooky event!'),
     async execute(interaction) {
         try {
