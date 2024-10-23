@@ -1,5 +1,4 @@
-const { Events } = require('discord.js')
-
+const { Events, EmbedBuilder } = require('discord.js')
 
 module.exports.run = async (client, message, args) => {
   const { cooldowns } = client
@@ -52,15 +51,36 @@ module.exports = {
     }
     // Handle Button Interactions
     else if (interaction.isButton()) {
-      const customId = interaction.customId;
+      const customId = interaction.customId
 
-      // Check for the roll button and pass the interaction to Sanity.js
-      if (customId === 'roll') {
-        try {
-          await handlePlayerTurn(interaction); // Call the function to handle player's turn
-        } catch (error) {
-          console.error('Error handling button interaction:', error);
+      if (
+        customId === 'relic_hunter' ||
+        customId === 'cult_breaker' ||
+        customId === 'mythos_investigator'
+      ) {
+        let selectedSpecialty = ''
+
+        if (customId === 'relic_hunter') {
+          selectedSpecialty = 'Relic Hunter'
+        } else if (customId === 'cult_breaker') {
+          selectedSpecialty = 'Cult Breaker'
+        } else if (customId === 'mythos_investigator') {
+          selectedSpecialty = 'Mythos Investigator'
         }
+
+        // Create a confirmation embed
+        const confirmEmbed = new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle('Specialty Selected')
+          .setDescription(
+            `You selected **${selectedSpecialty}**. Let the hunt begin!`
+          )
+
+        // Update the interaction with the confirmation embed and remove buttons
+        await interaction.update({ embeds: [confirmEmbed], components: [] })
+
+        // Log the selection to the console
+        console.log(`User selected: ${selectedSpecialty}`)
       }
     }
   },
