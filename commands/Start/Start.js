@@ -1,4 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require('discord.js');
 const { User } = require('../../Models/model');
 
 module.exports = {
@@ -27,8 +33,8 @@ module.exports = {
         });
       }
 
+      // If user already has a specialty, show their stats
       if (userData.specialty) {
-        // If user already has an account and a specialty, show their stats
         const userStatsEmbed = new EmbedBuilder()
           .setColor(0x0099ff)
           .setTitle(`Welcome back, ${userData.user_name}!`)
@@ -36,14 +42,14 @@ module.exports = {
           .addFields(
             { name: 'Specialty', value: userData.specialty },
             { name: 'Wealth', value: userData.wealth.toString() },
-            { name: 'Organization Size', value: userData.orgSize.toString() },
+            { name: 'Organization Size', value: userData.org_size.toString() },
             { name: 'Library Size', value: userData.library_size.toString() }
           );
 
         return interaction.reply({ embeds: [userStatsEmbed], ephemeral: true });
       }
 
-      // New player setup, ask if they want instructions
+      // New player setup: Ask if they want instructions
       const instructionsEmbed = new EmbedBuilder()
         .setColor(0x0099ff)
         .setTitle('Welcome to the Paranormal Investigation Firm')
@@ -52,7 +58,8 @@ module.exports = {
         )
         .addFields({
           name: 'Do you need instructions?',
-          value: 'Select "Yes" if you want a quick overview of what’s implemented right now.',
+          value:
+            'Select "Yes" if you want a quick overview of what’s implemented right now.',
         });
 
       const row = new ActionRowBuilder().addComponents(
@@ -66,9 +73,14 @@ module.exports = {
           .setStyle(ButtonStyle.Secondary)
       );
 
-      await interaction.reply({ embeds: [instructionsEmbed], components: [row], ephemeral: true });
+      // Send the initial instructions embed with buttons
+      await interaction.reply({
+        embeds: [instructionsEmbed],
+        components: [row],
+        ephemeral: true,
+      });
 
-      // Wait for user's response for instructions
+      // Wait for user's response for instructions (Collector)
       const filter = (i) => i.user.id === interaction.user.id;
       const collector = interaction.channel.createMessageComponentCollector({
         filter,
@@ -77,10 +89,9 @@ module.exports = {
 
       collector.on('collect', async (i) => {
         if (i.customId === 'yes_instructions') {
-          // Defer the interaction first
+          // Defer the interaction first and send detailed instructions
           await i.deferUpdate();
 
-          // Display instructions with specialties included
           const instructionsDetailEmbed = new EmbedBuilder()
             .setColor(0x00ff00)
             .setTitle('Game Instructions')
@@ -88,22 +99,24 @@ module.exports = {
             .addFields(
               {
                 name: 'Occult Knowledge',
-                value: 'You can read books to increase your knowledge in different paranormal fields. More knowledge unlocks new abilities.',
+                value:
+                  'You can read books to increase your knowledge in different paranormal fields. More knowledge unlocks new abilities.',
               },
               {
                 name: 'Investigators',
-                value: 'Hire investigators to help you retrieve relics, study cults, or dive deep into the mythos. They will assist you, but they start slow and need training.',
+                value:
+                  'Hire investigators to help you retrieve relics, study cults, or dive deep into the mythos. They will assist you, but they start slow and need training.',
               },
               {
                 name: 'Specialties',
-                value: 'Each player has a specialty that impacts how they progress. Relic Hunters gain wealth faster, Cult Breakers have increased prowess, and Mythos Investigators gain experience quicker. You can change your specialty later, but it will cost you.',
+                value:
+                  'Each player has a specialty that impacts how they progress. Relic Hunters gain wealth faster, Cult Breakers have increased prowess, and Mythos Investigators gain experience quicker. You can change your specialty later, but it will cost you.',
               }
             )
             .setFooter({
               text: 'That’s what we’ve got for now! Let’s move on to choosing your specialty.',
             });
 
-          // Add a Continue button to choose specialty
           const continueRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId('continue_choose_specialty')
@@ -113,13 +126,14 @@ module.exports = {
 
           await i.editReply({
             embeds: [instructionsDetailEmbed],
-            components: [continueRow], // Replace the previous buttons with the "Continue" button
+            components: [continueRow],
           });
 
-          // Collector for the "Continue" button
-          const continueFilter = (i) => i.user.id === interaction.user.id && i.customId === 'continue_choose_specialty';
+          // Set up the collector for "Continue" button
           const continueCollector = interaction.channel.createMessageComponentCollector({
-            filter: continueFilter,
+            filter: (i) =>
+              i.user.id === interaction.user.id &&
+              i.customId === 'continue_choose_specialty',
             time: 15000,
           });
 
@@ -127,19 +141,10 @@ module.exports = {
             await chooseSpecialty(i); // Proceed to specialty selection
           });
 
-          continueCollector.on('end', (collected) => {
-            if (!collected.size) {
-              interaction.followUp({
-                content: 'You didn’t select an option in time. Please run the command again to continue.',
-                ephemeral: true,
-              });
-            }
-          });
-
         } else if (i.customId === 'no_instructions') {
-          // Defer interaction and proceed to choose specialty
+          // Proceed without instructions
           await i.deferUpdate();
-          await chooseSpecialty(i); // Proceed to specialty selection directly
+          await chooseSpecialty(i);
         }
       });
 
@@ -165,7 +170,6 @@ module.exports = {
 
 // Function to handle specialty selection
 async function chooseSpecialty(interaction) {
-  // Ensure interaction is deferred or replied
   if (!interaction.deferred && !interaction.replied) {
     await interaction.deferReply({ ephemeral: true });
   }
@@ -196,82 +200,9 @@ async function chooseSpecialty(interaction) {
       .setStyle(ButtonStyle.Secondary)
   );
 
-  // Only follow-up if interaction is still active
-  if (!interaction.replied) {
-    await interaction.followUp({
-      embeds: [specialtyEmbed],
-      components: [specialtyRow],
-      ephemeral: true,
-    });
-  }
-
-  // Wait for the player's specialty selection
-  const filter = (i) =>
-    ['relic', 'cult', 'mythos'].includes(i.customId) &&
-    i.user.id === interaction.user.id;
-
-  const collector = interaction.channel.createMessageComponentCollector({
-    filter,
-    time: 15000,
-  });
-
-  collector.on('collect', async (i) => {
-    let selectedSpecialty = '';
-
-    if (i.customId === 'relic') {
-      selectedSpecialty = 'relic';
-    } else if (i.customId === 'cult') {
-      selectedSpecialty = 'cult';
-    } else if (i.customId === 'mythos') {
-      selectedSpecialty = 'mythos';
-    }
-
-    let user = await User.findOne({ where: { user_id: interaction.user.id } });
-    if (user) {
-      await user.update({ specialty: selectedSpecialty });
-    }
-
-    const confirmationEmbed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setTitle('Specialty Selected')
-      .setDescription(`You selected **${selectedSpecialty}**. Let the hunt begin!`);
-
-  //   // Handle unknown interaction errors gracefully
-  //   try {
-  //     if (!i.deferred && !i.replied) {
-  //       await i.update({
-  //         embeds: [confirmationEmbed],
-  //         components: [],
-  //         ephemeral: true,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     if (error.code === 10062) {
-  //       console.error('Interaction expired before it could be updated.');
-  //     } else {
-  //       console.error('❌ Error updating interaction:', error);
-  //     }
-  //   }
-  });
-
-  collector.on('end', (collected) => {
-    if (!collected.size) {
-      // Only send follow-up if interaction is still valid
-      try {
-        if (!interaction.replied) {
-          interaction.followUp({
-            content: 'You didn’t select a specialty in time. Please run the command again to continue.',
-            ephemeral: true,
-          });
-        }
-      } catch (error) {
-        if (error.code === 10062) {
-          console.error('Interaction expired before it could be followed up.');
-        } else {
-          console.error('❌ Error sending follow-up:', error);
-        }
-      }
-    }
+  await interaction.followUp({
+    embeds: [specialtyEmbed],
+    components: [specialtyRow],
+    ephemeral: true,
   });
 }
-
