@@ -5,6 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
+const User = require('../../Models/model.js')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,6 +14,14 @@ module.exports = {
 
   async execute(interaction) {
     try {
+      // Fetch or create user data
+      let userData = await User.findOne({ where: { user_id: userId } })
+      if (!userData) {
+        userData = await User.create({
+          user_id: userId,
+          user_name: interaction.user.username,
+        })
+      }
       const startEmbed = new EmbedBuilder()
         .setColor(0x0099ff)
         .setTitle('Welcome to the Paranormal Investigation Firm')
