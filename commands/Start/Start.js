@@ -5,21 +5,24 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const User = require('../../Models/model.js')
+const User = require('../../Models/model')
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('start')
-    .setDescription('Participate in the spooky event!'),
+    .setDescription('Let the hunt begin!'),
 
   async execute(interaction) {
     try {
+      const userId = interaction.user.id
+      const userName = interaction.user.username
+
       // Fetch or create user data
       let userData = await User.findOne({ where: { user_id: userId } })
       if (!userData) {
         userData = await User.create({
           user_id: userId,
-          user_name: interaction.user.username,
+          user_name: userName,
         })
       }
       const startEmbed = new EmbedBuilder()

@@ -24,6 +24,8 @@ Investigator.associate = (models) => {
 User.associate({ Investigator })
 Investigator.associate({ User })
 
+
+
 module.exports = {
   User,
   Investigator,
