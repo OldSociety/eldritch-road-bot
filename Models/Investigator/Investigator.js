@@ -21,9 +21,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     specialty: {
       type: DataTypes.ENUM(
-        'Relic',
-        'Cult',
-        'Mythos'
+        'relic',
+        'cult',
+        'mythos'
       ),
       allowNull: false,
     },

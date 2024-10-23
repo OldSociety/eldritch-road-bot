@@ -1,4 +1,3 @@
-// Start.js
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -14,7 +13,6 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Create an embed for the starting prompt
       const startEmbed = new EmbedBuilder()
         .setColor(0x0099ff)
         .setTitle('Welcome to the Paranormal Investigation Firm')
@@ -26,18 +24,17 @@ module.exports = {
           value: 'Relic Hunter, Cult Breaker, Mythos Investigator',
         })
 
-      // Create buttons for the three options
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId('relic_hunter')
+          .setCustomId('relic')
           .setLabel('Relic Hunter')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-          .setCustomId('cult_breaker')
+          .setCustomId('cult')
           .setLabel('Cult Breaker')
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
-          .setCustomId('mythos_investigator')
+          .setCustomId('mythos')
           .setLabel('Mythos Investigator')
           .setStyle(ButtonStyle.Secondary)
       )

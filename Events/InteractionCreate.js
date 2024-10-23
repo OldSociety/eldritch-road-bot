@@ -1,32 +1,5 @@
 const { Events, EmbedBuilder } = require('discord.js')
-
-module.exports.run = async (client, message, args) => {
-  const { cooldowns } = client
-
-  if (!cooldowns.has(command.data.name)) {
-    cooldowns.set(command.data.name, new Collection())
-  }
-
-  const now = Date.now()
-  const timestamps = cooldowns.get(command.data.name)
-  const defaultCooldownDuration = 3
-  const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1000
-
-  if (timestamps.has(interaction.user.id)) {
-    const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount
-
-    if (now < expirationTime) {
-      const expiredTimestamp = Math.round(expirationTime / 1000)
-      return interaction.reply({
-        content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
-        ephemeral: true,
-      })
-    }
-  }
-
-  timestamps.set(interaction.user.id, now)
-  setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount)
-}
+const { User } = require('../Models/model')
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -53,19 +26,34 @@ module.exports = {
     else if (interaction.isButton()) {
       const customId = interaction.customId
 
+      // Check if the customId is one of the specialties
       if (
-        customId === 'relic_hunter' ||
-        customId === 'cult_breaker' ||
-        customId === 'mythos_investigator'
+        customId === 'relic' ||
+        customId === 'cult' ||
+        customId === 'mythos'
       ) {
-        let selectedSpecialty = ''
+        const selectedSpecialty = customId // 'relic', 'cult', or 'mythos'
 
-        if (customId === 'relic_hunter') {
-          selectedSpecialty = 'Relic Hunter'
-        } else if (customId === 'cult_breaker') {
-          selectedSpecialty = 'Cult Breaker'
-        } else if (customId === 'mythos_investigator') {
-          selectedSpecialty = 'Mythos Investigator'
+        // Update the User's specialty in the database
+        try {
+          // Fetch user by their Discord user_id (interaction.user.id)
+          let user = await User.findOne({
+            where: { user_id: interaction.user.id },
+          })
+
+          if (user) {
+            // Update the user's specialty
+            await user.update({ specialty: selectedSpecialty })
+
+            // Log the result for debugging purposes
+            console.log(
+              `Updated user ${interaction.user.username}'s specialty to: ${selectedSpecialty}`
+            )
+          } else {
+            console.error(`User not found: ${interaction.user.username}`)
+          }
+        } catch (error) {
+          console.error('Error updating user specialty:', error)
         }
 
         // Create a confirmation embed
@@ -73,7 +61,10 @@ module.exports = {
           .setColor(0x00ff00)
           .setTitle('Specialty Selected')
           .setDescription(
-            `You selected **${selectedSpecialty}**. Let the hunt begin!`
+            `You selected **${
+              selectedSpecialty.charAt(0).toUpperCase() +
+              selectedSpecialty.slice(1)
+            }**. Let the hunt begin!`
           )
 
         // Update the interaction with the confirmation embed and remove buttons
