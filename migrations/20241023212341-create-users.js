@@ -14,13 +14,18 @@ module.exports = {
       },
       specialty: {
         type: Sequelize.ENUM('relic', 'cult', 'mythos'),
-        allowNull: false,
+        allowNull: true,
         defaultValue: 'relic',
       },
       wealth: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 100,
+      },
+      org_name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        defaultValue: 'Lamplighters',
       },
       org_size: {
         type: Sequelize.INTEGER,

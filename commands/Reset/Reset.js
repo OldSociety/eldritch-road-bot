@@ -21,7 +21,6 @@ module.exports = {
   async execute(interaction) {
     try {
       const isAdmin = interaction.guild.roles.cache.get(process.env.ADMINROLEID)
-      console.log(isAdmin)
 
       // Check if the executing user has the admin role
       if (!interaction.member.roles.cache.has(process.env.ADMINROLEID)) {

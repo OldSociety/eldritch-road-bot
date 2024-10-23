@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 100,
     },
+    org_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'Lamplighters'
+      },
     org_size: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -26,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     specialty: {
       type: DataTypes.STRING,
       allowNull: true,
+      defaultValue: 'relic',
     },
     library_size: {
       type: DataTypes.INTEGER,
