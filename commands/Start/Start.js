@@ -4,8 +4,9 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-} = require('discord.js');
-const { User } = require('../../Models/model');
+} = require('discord.js')
+const { User } = require('../../Models/model')
+const {chooseSpecialty} = require('./helpers/chooseSpecialty')
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,15 +15,15 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      const userId = interaction.user.id;
-      const userName = interaction.user.username;
+      const userId = interaction.user.id
+      const userName = interaction.user.username
 
       // Check if the user already has an account
-      let userData = await User.findOne({ where: { user_id: userId } });
+      let userData = await User.findOne({ where: { user_id: userId } })
 
       // If user doesn't exist, create a new entry
       if (!userData) {
-        console.log(`User not found: ${userName}, creating new user...`);
+        console.log(`User not found: ${userName}, creating new user...`)
         userData = await User.create({
           user_id: userId,
           user_name: userName,
@@ -30,7 +31,7 @@ module.exports = {
           org_size: 1,
           library_size: 0,
           specialty: null, // Will be set after they choose a specialty
-        });
+        })
       }
 
       // If user already has a specialty, show their stats
@@ -44,9 +45,9 @@ module.exports = {
             { name: 'Wealth', value: userData.wealth.toString() },
             { name: 'Organization Size', value: userData.org_size.toString() },
             { name: 'Library Size', value: userData.library_size.toString() }
-          );
+          )
 
-        return interaction.reply({ embeds: [userStatsEmbed], ephemeral: true });
+        return interaction.reply({ embeds: [userStatsEmbed], ephemeral: true })
       }
 
       // New player setup: Ask if they want instructions
@@ -60,7 +61,7 @@ module.exports = {
           name: 'Do you need instructions?',
           value:
             'Select "Yes" if you want a quick overview of what’s implemented right now.',
-        });
+        })
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -71,26 +72,26 @@ module.exports = {
           .setCustomId('no_instructions')
           .setLabel('No')
           .setStyle(ButtonStyle.Secondary)
-      );
+      )
 
       // Send the initial instructions embed with buttons
       await interaction.reply({
         embeds: [instructionsEmbed],
         components: [row],
         ephemeral: true,
-      });
+      })
 
       // Wait for user's response for instructions (Collector)
-      const filter = (i) => i.user.id === interaction.user.id;
+      const filter = (i) => i.user.id === interaction.user.id
       const collector = interaction.channel.createMessageComponentCollector({
         filter,
         time: 15000,
-      });
+      })
 
       collector.on('collect', async (i) => {
         if (i.customId === 'yes_instructions') {
           // Defer the interaction first and send detailed instructions
-          await i.deferUpdate();
+          await i.deferUpdate()
 
           const instructionsDetailEmbed = new EmbedBuilder()
             .setColor(0x00ff00)
@@ -115,94 +116,55 @@ module.exports = {
             )
             .setFooter({
               text: 'That’s what we’ve got for now! Let’s move on to choosing your specialty.',
-            });
+            })
 
           const continueRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId('continue_choose_specialty')
               .setLabel('Continue')
               .setStyle(ButtonStyle.Primary)
-          );
+          )
 
           await i.editReply({
             embeds: [instructionsDetailEmbed],
             components: [continueRow],
-          });
+          })
 
           // Set up the collector for "Continue" button
-          const continueCollector = interaction.channel.createMessageComponentCollector({
-            filter: (i) =>
-              i.user.id === interaction.user.id &&
-              i.customId === 'continue_choose_specialty',
-            time: 15000,
-          });
+          const continueCollector =
+            interaction.channel.createMessageComponentCollector({
+              filter: (i) =>
+                i.user.id === interaction.user.id &&
+                i.customId === 'continue_choose_specialty',
+              time: 15000,
+            })
 
           continueCollector.on('collect', async (i) => {
-            await chooseSpecialty(i); // Proceed to specialty selection
-          });
-
+            await chooseSpecialty(i) // Proceed to specialty selection
+          })
         } else if (i.customId === 'no_instructions') {
           // Proceed without instructions
-          await i.deferUpdate();
-          await chooseSpecialty(i);
+          await i.deferUpdate()
+          await chooseSpecialty(i)
         }
-      });
+      })
 
       collector.on('end', (collected) => {
         if (!collected.size) {
           interaction.followUp({
             content: 'You didn’t select an option in time. Let’s move forward!',
             ephemeral: true,
-          });
+          })
 
-          chooseSpecialty(interaction);
+          chooseSpecialty(interaction)
         }
-      });
+      })
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('❌ Error:', error)
       await interaction.reply({
         content: 'There was an error executing this command.',
         ephemeral: true,
-      });
+      })
     }
   },
-};
-
-// Function to handle specialty selection
-async function chooseSpecialty(interaction) {
-  if (!interaction.deferred && !interaction.replied) {
-    await interaction.deferReply({ ephemeral: true });
-  }
-
-  const specialtyEmbed = new EmbedBuilder()
-    .setColor(0x0099ff)
-    .setTitle('Choose Your Specialty')
-    .setDescription(
-      'Now it’s time to choose your path. Each specialty has its own benefits: \n\n' +
-        '**Relic Hunter**: Gain wealth faster \n' +
-        '**Cult Breaker**: Increase your prowess faster \n' +
-        '**Mythos Investigator**: Gain experience quicker \n\n' +
-        'Once you choose a specialty, you can change it later, but it will cost you.'
-    );
-
-  const specialtyRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('relic')
-      .setLabel('Relic Hunter')
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId('cult')
-      .setLabel('Cult Breaker')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId('mythos')
-      .setLabel('Mythos Investigator')
-      .setStyle(ButtonStyle.Secondary)
-  );
-
-  await interaction.followUp({
-    embeds: [specialtyEmbed],
-    components: [specialtyRow],
-    ephemeral: true,
-  });
 }

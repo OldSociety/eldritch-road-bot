@@ -5,7 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js')
-const { User } = require('../../Models/model')
+const { User, Investigator } = require('../../Models/model') // Assuming Investigator is defined here
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -76,6 +76,11 @@ module.exports = {
 
       collector.on('collect', async (i) => {
         if (i.customId === 'confirm_reset') {
+          // Delete investigators associated with the user
+          await Investigator.destroy({
+            where: { userId: targetUserId },
+          })
+
           // Delete the user account
           await userData.destroy()
 
@@ -84,7 +89,7 @@ module.exports = {
             .setColor(0x00ff00)
             .setTitle('User Account Deleted')
             .setDescription(
-              `**${targetUser.username}**'s account has been successfully reset.`
+              `**${targetUser.username}**'s account and all associated investigators have been successfully reset.`
             )
 
           // Update the original interaction with the deletion confirmation embed
