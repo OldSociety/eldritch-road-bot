@@ -2,19 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// Load and parse creatures.json file
-const filePath = path.join(__dirname, '..', '..', 'db', 'creatures.json');
-const parsedData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+// Read all filenames in the assets folder to create validCreatures set
+const assetsPath = path.join(__dirname, '..', '..', 'assets');
+const creatureFiles = fs.readdirSync(assetsPath);
+const validCreatures = new Set(creatureFiles.map(filename => path.parse(filename).name)); // Strip file extensions
 
-// Access the "availableImages" array
-const creaturesWithImages = parsedData.availableImages;
-
-// Verify it's now an array and create the Set
-if (Array.isArray(creaturesWithImages)) {
-  const validCreatures = new Set(creaturesWithImages); // Now validCreatures holds all image names
-} else {
-  console.error("creaturesWithImages is not an array.");
-}
 
 const monsterCacheByTier = { // Cache monsters by tier
   'Tier 1': [],
@@ -35,11 +27,11 @@ module.exports = {
     const fetch = (await import('node-fetch')).default;
 
     const tiers = [
-      { name: 'Tier 1', crRange: [0.125, 4], color: 0x808080, chance: 0.5 }, // 50% Grey
-      { name: 'Tier 2', crRange: [5, 10], color: 0x00ff00, chance: 0.3 },   // 30% Green
-      { name: 'Tier 3', crRange: [11, 15], color: 0x0000ff, chance: 0.17 }, // 17% Blue
-      { name: 'Tier 4', crRange: [16, 19], color: 0x800080, chance: 0.05 }, // 5% Purple
-      { name: 'Tier 5', crRange: [20, Infinity], color: 0xffd700, chance: 0.02 } // 2% Gold
+      { name: 'Common', crRange: [0.125, 4], color: 0x808080, chance: 0.5 }, // 50% Grey
+      { name: 'Uncommon', crRange: [5, 10], color: 0x00ff00, chance: 0.3 },   // 30% Green
+      { name: 'Rare', crRange: [11, 15], color: 0x0000ff, chance: 0.17 }, // 17% Blue
+      { name: 'Very Rare', crRange: [16, 19], color: 0x800080, chance: 0.05 }, // 5% Purple
+      { name: 'Legendary', crRange: [20, Infinity], color: 0xffd700, chance: 0.02 } // 2% Gold
     ];
 
     async function cacheMonstersByTier() {
@@ -56,7 +48,6 @@ module.exports = {
         try {
           // Check if the monster is in the valid creatures list before proceeding
           if (!validCreatures.has(monster.index)) {
-            console.log(`Skipping ${monster.name} (index: ${monster.index}) - Not in validated image list.`);
             continue;
           }
 
@@ -73,7 +64,6 @@ module.exports = {
 
           const matchingTier = tiers.find(tier => cr >= tier.crRange[0] && cr <= tier.crRange[1]);
           if (matchingTier) {
-            console.log(`Caching ${monsterDetails.name} (index: ${monster.index}) in ${matchingTier.name}`);
             monsterCacheByTier[matchingTier.name].push({
               name: monsterDetails.name,
               cr,
@@ -131,10 +121,10 @@ module.exports = {
         .setTitle(monster.name)
         .setDescription(`**Challenge Rating:** ${monster.cr}`)
         .setThumbnail(monster.imageUrl)
-        .setFooter({ text: `Tier: ${selectedTier.name} - ${selectedTier.chance * 100}% chance` });
+        .setFooter({ text: `${selectedTier.name}` });
 
       await interaction.editReply({ embeds: [embed] });
-      console.log(`Displayed monster: ${monster.name} | Tier: ${selectedTier.name}`);
+      // console.log(`Displayed monster: ${monster.name} | Tier: ${selectedTier.name}`);
     } else {
       await interaction.editReply('No monster found for this tier. Please try again.');
       console.log('No monster found for the selected tier.');
